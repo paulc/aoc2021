@@ -17,49 +17,35 @@ function part1(data) {
 }
 
 function mostCommon(data,index) {
-    let count = 0
-    for (const reading of data) {
-        count += (reading[index] === 1) ? 1 : -1
-    }
-    return (count >= 0) ? 1 : 0
+    return (data.reduce((prev,cur) => prev + ((cur[index] === 1) ? 1 : -1),0) >= 0) ? 1 : 0
 }
 
 function leastCommon(data,index) {
-    let count = 0
-    for (const reading of data) {
-        count += (reading[index] === 1) ? 1 : -1
-    }
-    return (count < 0) ? 1 : 0
+    return (data.reduce((prev,cur) => prev + ((cur[index] === 1) ? 1 : -1),0) < 0) ? 1 : 0
 }
 
-function *msbFilter(data,index,value) {
-    for (const reading of data) {
-        if (reading[index] === value) {
-            yield reading
-        }
+function bitFilter(data,index,value) {
+    return data.filter((r) => r[index] === value)
+}
+
+function calcOxygen(data,index) {
+    if (data.length == 1) {
+        return data[0].reduce((prev,cur) => (prev*2) + cur)
+    } else {
+        return calcOxygen(Array.from(bitFilter(data,index,mostCommon(data,index))),index+1)
     }
 }
 
-function calcOxygen(data) {
-    let i = 0
-    while(data.length > 1) {
-        data = Array.from(msbFilter(data,i,mostCommon(data,i)))
-        ++i
+function calcCO2(data,index) {
+    if (data.length == 1) {
+        return data[0].reduce((prev,cur) => (prev*2) + cur)
+    } else {
+        return calcCO2(Array.from(bitFilter(data,index,leastCommon(data,index))),index+1)
     }
-    return data[0].reduce((prev,cur) => (prev*2) + cur)
-}
-
-function calcCO2(data) {
-    let i = 0
-    while(data.length > 1) {
-        data = Array.from(msbFilter(data,i,leastCommon(data,i)))
-        ++i
-    }
-    return data[0].reduce((prev,cur) => (prev*2) + cur)
 }
 
 function part2(data) {
-    return calcOxygen(data) * calcCO2(data)
+    return calcOxygen(data,0) * calcCO2(data,0)
 }
 
 const test = `
