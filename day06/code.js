@@ -10,33 +10,11 @@ function parseInput(data) {
     return data.trim().split(",").map((s) => parseInt(s))
 }
 
-/* 
-function run(data,days) {
-    const fish = parseInput(data)
-    let fishDays = new Array(9).fill(0)
-    fish.map((d) => ++fishDays[d])
-    for (let i = 0; i < days; ++i) {
-        const next = new Array(9).fill(0)
-        for (const d of fishDays.keys()) {
-            if (d === 0) {
-                next[8] += fishDays[d]
-                next[6] += fishDays[d]
-            } else {
-                next[d-1] += fishDays[d]
-            }
-        }
-        fishDays = next
-    }
-    return fishDays.reduce((cur,prev) => cur + prev)
-}
-*/
-
 function run(data,days) {
     const fish = parseInput(data)
     const fishDays = new Array(9).fill(0)
     fish.map((d) => ++fishDays[d])
     for (let i = 0; i < days; ++i) {
-        let next = 0
         const [d0,d1,d2,d3,d4,d5,d6,d7,d8] = fishDays
         fishDays.splice(0,9,d1,d2,d3,d4,d5,d6,d0+d7,d8,d0)
     }
