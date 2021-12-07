@@ -6,57 +6,31 @@ const test = `
 16,1,2,0,4,2,7,1,2,14
 `
 
+function *range(start,end,step=1) {
+    for (let i = ((end === undefined) ? 0 : start);
+         (step < 0) ? i > ((end === undefined) ? start : end):
+                      i < ((end === undefined) ? start : end);
+         i += step) {
+        yield i
+    }
+}
+
 function parseInput(data) {
     return data.trim().split(",").map((s) => parseInt(s))
 }
 
 function part1(data) {
     const crabs = parseInput(data)
-    const align = (t) => crabs.reduce((prev,cur) => prev + Math.abs(cur-t),0)
-    const min = Math.min(...crabs)
-    const max = Math.max(...crabs)
-    let minCost = undefined
-    for (let target = min;target <= max; ++target) {
-        if (minCost === undefined) {
-            minCost = align(target)
-        } else {
-            const cost = align(target)
-            if (cost < minCost) {
-                minCost = cost
-            }
-        }
-    }
-    return minCost
+    const align = (target) => crabs.reduce((prev,cur) => prev + Math.abs(cur-target),0)
+    return Math.min(...Array.from(range(Math.min(...crabs),Math.max(...crabs)), (i) => align(i)))
 }
 
 function part2(data) {
     const crabs = parseInput(data)
-    const costs = [0,1]
-    const cost = (n) => {
-        if (costs[n] === undefined) {
-            for (let i = 0; i <= n; ++i) {
-                if (costs[i] === undefined) {
-                    costs[i] = costs[i-1] + i
-                }
-            }
-        }
-        return costs[n]
-    }
+    const costs = [0]
+    const cost = (n) => (costs[n] === undefined) ? Array.from(range(costs.length,n+1),(i) => costs[i] = i + costs[i-1]).pop() : costs[n]
     const align = (t) => crabs.reduce((prev,cur) => prev + cost(Math.abs(cur-t)),0)
-    const min = Math.min(...crabs)
-    const max = Math.max(...crabs)
-    let minCost = undefined
-    for (let target = min;target <= max; ++target) {
-        if (minCost === undefined) {
-            minCost = align(target)
-        } else {
-            const cost = align(target)
-            if (cost < minCost) {
-                minCost = cost
-            }
-        }
-    }
-    return minCost
+    return Math.min(...Array.from(range(Math.min(...crabs),Math.max(...crabs)), (i) => align(i)))
 }
 
 
