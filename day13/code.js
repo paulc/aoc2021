@@ -43,12 +43,12 @@ class Grid {
         return new Grid(this.maxX,fold,Array.from(top.values()))
     }
     foldX(fold) {
-        const top = new Map(Array.from(this.dots.entries()).filter(([k,[x,y]]) => x < fold))
+        const left = new Map(Array.from(this.dots.entries()).filter(([k,[x,y]]) => x < fold))
         for (const [k,[x,y]] of Array.from(this.dots.entries()).filter(([k,[x,y]]) => x > fold)) {
             const mx = this.maxX - x - 1
-            top.set([mx,y].join(","),[mx,y])
+            left.set([mx,y].join(","),[mx,y])
         }
-        return new Grid(fold,this.maxY,Array.from(top.values()))
+        return new Grid(fold,this.maxY,Array.from(left.values()))
     }
     toString() {
         const str = []
