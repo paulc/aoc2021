@@ -51,45 +51,54 @@ function parseInput(data) {
     return data.trim().split("\n").flatMap((line) => [line.split("-"),line.split("-").reverse()]).filter(([start,end]) => end !== "start")
 }
 
-Map.prototype.addList = function (k,v) { this.has(k) ? this.get(k).push(v) : this.set(k,[v]) }
 Map.prototype.incr = function(k) { this.has(k) ? this.set(k,this.get(k)+1) : this.set(k,1); return this.get(k) }
-String.prototype.isLowerCase = function () { return this.toLowerCase() === this.valueOf() }
+Map.prototype.getDefault = function(k,d) { return this.has(k) ? this.get(k) : d }
 
-function findPath(visited,paths) {
+function findPath(visited,paths,small,done) {
     const last = visited[visited.length-1]
-    if (last === 'end') {
-        return 1
+    if (last === "end") {
+        done.add(visited.join(","))
+    } else {
+        if (/^[a-z]+$/.test(last)) {
+            small = new Set([...small,last])
+        }
+        const valid = paths.filter(([start,end]) => (start === last && !small.has(end)))
+        valid.map(([_,next]) => findPath(Array.from([...visited,next]),paths,small,done))
     }
-    const valid = paths.get(last).filter((next) => !(next.isLowerCase() && visited.includes(next)))
-    return valid.map((next) => findPath(Array.from([...visited,next]),paths)).reduce((prev,cur) => prev + cur,0)
 }
 
-function findPath2(visited,paths,twice) {
+function findPath2(visited,paths,small,done) {
     const last = visited[visited.length-1]
-    if (last === 'end') {
-        return 1
-    }
-    if (!twice) {
-        const counts = new Map()
-        visited.filter((node) => node.isLowerCase()).forEach((v) => counts.incr(v))
-        if (Math.max(...Array.from(counts.values())) > 1) {
-            twice = true
+    if (last === "end") {
+        done.add(visited.join(","))
+    } else {
+        if (/^[a-z]+$/.test(last)) {
+            small = new Map([...small])
+            small.incr(last)
+        }
+        if (Array.from(small.values()).reduce((prev,cur) => cur > 1 ? prev + 1 : prev,0) > 1) {
+            // skip
+        } else {
+            const valid = paths.filter(([start,end]) => (start === last && !(small.getDefault(end,0) > 1)))
+            valid.map(([_,next]) => findPath2(Array.from([...visited,next]),paths,small,done))
         }
     }
-    const valid = twice ? paths.get(last).filter((next) => !(next.isLowerCase() && visited.includes(next))) : paths.get(last)
-    return valid.map((next) => findPath2(Array.from([...visited,next]),paths,twice)).reduce((prev,cur) => prev + cur,0)
 }
 
 function part1(data) {
-    const paths = new Map()
-    parseInput(data).forEach(([k,v]) => paths.addList(k,v))
-    return findPath(['start'],paths)
+    const paths = parseInput(data)
+    const small = new Set()
+    const done = new Set()
+    findPath(["start"],paths,small,done)
+    return done.size
 }
 
 function part2(data) {
-    const paths = new Map()
-    parseInput(data).forEach(([k,v]) => paths.addList(k,v))
-    return findPath2(['start'],paths,false)
+    const paths = parseInput(data)
+    const small = new Map()
+    const done = new Set()
+    findPath2(["start"],paths,small,done)
+    return done.size
 }
 
 const part1_expected_a = 10
