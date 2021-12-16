@@ -15,46 +15,44 @@ const test = `
 2311944581
 `
 
-Map.prototype.getDefault = function(k,d) { return this.has(k) ? this.get(k) : d }
+function *graph(grid) {
+    const ADJ = [[-1,0],[1,0],[0,-1],[0,1]]
+    const valid = ([x,y]) => x >= 0 && x < grid[0].length && y >=0 && y < grid.length
+    const adj = (x,y) => [[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dy]) => [x+dx,y+dy]).filter((xy) => valid(xy))
+    for (let x = 0; x < grid[0].length; ++x) {
+        for (let y = 0; y < grid.length; ++y) {
+            yield [`${x},${y}`, adj(x,y).map(([x,y]) => [`${x},${y}`,grid[y][x]])]
+        }
+    }
+}
 
-class Grid {
-    constructor(grid) {
-        this.grid = grid
-        this.maxX = grid[0].length - 1
-        this.maxY = grid.length - 1
-        this.visited = new Map([[`${this.maxX},${this.maxY}`,this.grid[this.maxY][this.maxX]]])
-    }
-    getXY(x,y) {
-        return this.grid[y][x]
-    }
-    getCost(x,y) {
-        if (this.visited.has(`${x},${y}`)) {
-            return this.visited.get(`${x},${y}`)
-        }
-        let cost = this.grid[y][x]
-        if (x === this.maxX) { 
-            cost += this.getCost(x,y+1)
-        } else if (y === this.maxY) {
-            cost += this.getCost(x+1,y)
-        } else {
-            cost += Math.min(this.getCost(x+1,y),this.getCost(x,y+1))
-        }
-        this.visited.set(`${x},${y}`,cost)
-        return cost
-    }
-    toString() {
-        return this.grid.map((r) => r.join("")).join("\n") 
-    }
-    visitedToString() {
-        const rows = []
-        for (let y = 0; y <= this.maxY; ++y) {
-            const row = []
-            for (let x = 0; x <= this.maxX; ++x) {
-                row.push(("000" + this.visited.getDefault(`${x},${y}`,0)).slice(-3))
+function shortestPath(graph,start,end) {
+    const Q = new Set(graph.keys())
+    const known = new Set()
+    const dist = new Map(Array.from(graph.keys(),(k) => [k,Infinity]))
+    dist.set(start,0)
+    known.add(start)
+    while (Q.size > 0) {
+        let min = Infinity
+        let u = undefined
+        for (const v of known) {
+            if (dist.get(v) < min) {
+                min = dist.get(v)
+                u = v
             }
-            rows.push(row.join(" "))
         }
-        return rows.join("\n")
+        Q.delete(u)
+        known.delete(u)
+        if (u === end) {
+            return dist.get(end)
+        }
+        for (const [v,dv] of graph.get(u).filter(([v,d]) => Q.has(v))) {
+            known.add(v)
+            const alt = dist.get(u) + dv
+            if (alt < dist.get(v)) {
+                dist.set(v,alt)
+            }
+        }
     }
 }
 
@@ -63,26 +61,29 @@ function parseInput(data) {
 }
 
 function part1(data) {
-    const g = new Grid(parseInput(data))
-    return g.getCost(0,0) - g.getXY(0,0)
+    const grid = parseInput(data)
+    const maxX = grid[0].length - 1
+    const maxY = grid.length - 1
+    const g = new Map(graph(grid))
+    return shortestPath(g,"0,0",`${maxX},${maxY}`)
 }
 
 function part2(data) {
-    const tiles = parseInput(data) 
-    const rowLen = tiles[0].length
-    const colLen = tiles.length
-    for (const row of tiles) {
+    const grid = parseInput(data) 
+    const rowLen = grid[0].length
+    const colLen = grid.length
+    for (const row of grid) {
         for (let i = 0; i < 4; ++i) {
             row.push(...row.slice(-rowLen).map((v) => (v === 9) ? 1 : v + 1))
         }
     }
     for (let i = 0; i < 4; ++i) {
-        tiles.push(...tiles.slice(-colLen).map((r) => r.map((v) => (v === 9) ? 1 : v + 1)))
+        grid.push(...grid.slice(-colLen).map((r) => r.map((v) => (v === 9) ? 1 : v + 1)))
     }
-    const g = new Grid(tiles)
-    print("Cost:",g.getCost(0,0))
-    print(g.visitedToString())
-    return g.getCost(0,0) - g.getXY(0,0)
+    const maxX = grid[0].length - 1
+    const maxY = grid.length - 1
+    const g = new Map(graph(grid))
+    return shortestPath(g,"0,0",`${maxX},${maxY}`)
 }
 
 const part1_expected = 40
@@ -101,4 +102,3 @@ if (part2(test) !== part2_expected) {
 }
 
 print("Part2:",part2(data))
-
