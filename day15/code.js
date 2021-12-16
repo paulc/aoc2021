@@ -29,7 +29,7 @@ function *graph(grid) {
 function shortestPath(graph,start,end) {
     const Q = new Set(graph.keys())
     const known = new Set()
-    const dist = new Map(Array.from(graph.keys(),(k) => [k,Infinity]))
+    const dist = new Map()
     dist.set(start,0)
     known.add(start)
     while (Q.size > 0) {
@@ -48,6 +48,9 @@ function shortestPath(graph,start,end) {
         }
         for (const [v,dv] of graph.get(u).filter(([v,d]) => Q.has(v))) {
             known.add(v)
+            if (!dist.has(v)) {
+                dist.set(v,Infinity)
+            }
             const alt = dist.get(u) + dv
             if (alt < dist.get(v)) {
                 dist.set(v,alt)
