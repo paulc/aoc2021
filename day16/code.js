@@ -2,11 +2,6 @@
 import * as std from "std";
 import * as os from "os";
 
-Array.prototype.sum = function() { return this.reduce((prev,cur) => prev + cur) }
-
-const Literal = (level,version,type,value) => new Object({kind:"LITERAL",level:level,version:version,type:type,value:value})
-const Operator = (level,version,type) => new Object({kind:"OPERATOR",level:level,version:version,type:type,value:undefined})
-
 class Packet {
     constructor(packet) {
         this.packet = packet.split("").map((x) => parseInt(x,16).toString(2).padStart(4,'0')).join("")
@@ -18,50 +13,110 @@ class Packet {
         this.index += n
         return val
     }
-    parse(level=0) {
-        const [version,type] = this.getHeader()
-        if (type === 4) {
-            const value = this.getLiteral()
-            this.packets.push(Literal(level,version,type,value))
-        } else {
-            this.packets.push(Operator(level,version,type))
-            if (this.getBits(1) === 0) {
-                const len = this.getBits(15)
-                const end = this.index + len
-                while (this.index < end) {
-                    this.parse(level+1)
-                }
-            } else {
-                const subpackets = this.getBits(11)
-                for (let i = 0; i < subpackets; ++i) {
-                    this.parse(level+1)
-                }
-            }
-        }
-    }
     getHeader() {
         return [this.getBits(3),this.getBits(3)]
     }
     getLiteral() {
-        let val = 0
+        let val = BigInt(0)
         while(this.getBits(1) === 1) {
-            val = (val << 4) + this.getBits(4)
+            val = (val << BigInt(4)) + BigInt(this.getBits(4))
         }
-        val = (val << 4) + this.getBits(4)
+        val = (val << BigInt(4)) + BigInt(this.getBits(4))
         return val
     }
 }
 
+class Root {
+    constructor() {
+        this.children = []
+    }
+    addChild(version,type,value) {
+        const child = new Node(version,type,value)
+        this.children.push(child)
+        return child
+    }
+    eval() {
+        return this.children.map((c) => c.eval())
+    }
+    toString() {
+        return JSON.stringify(this,null,2)
+    }
+    flatten(f) {
+        return this.children.flatMap((n) => n.flatten(f))
+    }
+    parse(packet) {
+        const [version,type] = packet.getHeader()
+        if (type === 4) {
+            const value = packet.getLiteral()
+            this.addChild(version,type,value)
+        } else {
+            const child = this.addChild(version,type)
+            if (packet.getBits(1) === 0) {
+                const len = packet.getBits(15)
+                const end = packet.index + len
+                while (packet.index < end) {
+                    child.parse(packet)
+                }
+            } else {
+                const subpackets = packet.getBits(11)
+                for (let i = 0; i < subpackets; ++i) {
+                    child.parse(packet)
+                }
+            }
+        }
+        return this
+    }
+}
+
+Array.prototype.sum = function() { return this.reduce((prev,cur) => prev + cur, 0) }
+
+class Node extends Root {
+    constructor(version,type,value) {
+        super()
+        this.version = version
+        this.type = type
+        this.value = value
+        this.children = []
+    }
+    eval(depth=0) {
+        const i = (n) => "".padStart(n+1,">")
+        const c = this.children.map((n) => n.eval(depth+1))
+        switch (this.type) {
+            case 0:     // sum
+                return c.reduce((prev,cur) => prev + cur)
+            case 1:     // mul
+                return c.reduce((prev,cur) => prev * cur)
+            case 2:     // min
+                return c.reduce((prev,cur) => (cur < prev) ? cur : prev, BigInt(Number.MAX_VALUE))
+            case 3:     // max
+                return c.reduce((prev,cur) => (cur > prev) ? cur : prev, BigInt(0))
+            case 4:     // value
+                return this.value
+            case 5:     // greater than
+                return c[0] > c[1] ? BigInt(1) : BigInt(0)
+            case 6:     // less than
+                return c[0] < c[1] ? BigInt(1) : BigInt(0)
+            case 7:     // equal
+                return c[0] === c[1] ? BigInt(1) : BigInt(0)
+            default:
+                return undefined
+        } 
+    }
+    flatten(f) {
+        return [f(this),...this.children.flatMap((n) => n.flatten(f))]
+    }
+}
+
 function part1(data) {
-    const p = new Packet(data) 
-    p.parse()
-    return p.packets.map((p) => p.version).sum()
+    const root = new Root()
+    root.parse(new Packet(data))
+    return root.flatten((n) => n.version).sum()
 }
 
 function part2(data) {
-    const p = new Packet(data) 
-    p.parse()
-    print(JSON.stringify(p.packets))
+    const root = new Root()
+    root.parse(new Packet(data))
+    return root.eval().pop()
 }
 
 const test1 = [["8A004A801A8002F478",16],
@@ -69,9 +124,20 @@ const test1 = [["8A004A801A8002F478",16],
                ["C0015000016115A2E0802F182340",23],
                ["A0016C880162017C3686B18A3D4780",31]]
 
+const test2 = [
+               ["C200B40A82",3],
+               ["04005AC33890",54],
+               ["880086C3E88112",7],
+               ["CE00C43D881120",9],
+               ["D8005AC2A8F0",1],
+               ["F600BC2D8F",0],
+               ["9C005AC2F8F0",0],
+               ["9C0141080250320F1802104A08",1],
+]
+
 for (const [packet,result] of test1) {
     if (part1(packet) !== result) {
-        throw("Part1 Test Failed",packet)
+        throw("Part1 Test Failed: " + packet)
     }
 }
 
@@ -79,13 +145,11 @@ const data = std.loadFile("input.txt")
 
 print("Part1:",part1(data))
 
-part2("C200B40A82")
-
-/*
-if (part2(test) !== part2_expected) {
-    throw("Part2 Test Failed")
+for (const [packet,result] of test2) {
+    if (part2(packet) !== BigInt(result)) {
+        throw("Part2 Test Failed: " + packet)
+    }
 }
 
 print("Part2:",part2(data))
-*/
 
