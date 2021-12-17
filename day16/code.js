@@ -68,8 +68,6 @@ class Root {
     }
 }
 
-Array.prototype.sum = function() { return this.reduce((prev,cur) => prev + cur, 0) }
-
 class Node extends Root {
     constructor(version,type,value) {
         super()
@@ -110,7 +108,7 @@ class Node extends Root {
 function part1(data) {
     const root = new Root()
     root.parse(new Packet(data))
-    return root.flatten((n) => n.version).sum()
+    return root.flatten((n) => n.version).reduce((prev,cur) => prev + cur, 0)
 }
 
 function part2(data) {
