@@ -18,9 +18,7 @@ const test = `
 const isPair = (v) => Pair.prototype.isPrototypeOf(v)
 const isArray = (v) => Array.prototype.isPrototypeOf(v)
 
-function parseInput(data) {
-    return data.trim().split("\n").map((l) => eval(l)).map((n) => new Pair(n))
-}
+Array.prototype.pairs = function() { return this.flatMap((x) => this.flatMap((y) => (x != y) ? [[x,y]] : [])) }
 
 class Pair {
     constructor(LR,parent=undefined) {
@@ -115,13 +113,26 @@ class Pair {
     }
 }
 
+function parseInput(data) {
+    return data.trim().split("\n").map((l) => eval(l))
+}
+
 function part1(data) {
-    const numbers = parseInput(data)
+    const numbers = parseInput(data).map((n) => new Pair(n))
     const result = numbers.reduce((prev,cur) => new Pair([prev,cur]).reduce())
     return result.magnitude()
 }
 
 function part2(data) {
+    let max = 0
+    const pairs = parseInput(data).pairs()
+    for (const [a,b] of pairs) {
+        const s = new Pair([a,b]).reduce().magnitude()
+        if (s > max) {
+            max = s
+        }
+    }
+    return max
 }
 
 const part1_expected = 4140
