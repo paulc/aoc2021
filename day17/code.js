@@ -10,7 +10,7 @@ function parseInput(data) {
     return Array.from(data.matchAll(/-?\d+/g)).flatMap((i) => parseInt(i))
 }
 
-function getRange([x1,x2,y1,y2]) {
+function guessRange([x1,x2,y1,y2]) {
     let [min,max,sum] = [0,0,0]
     const dxrange = []
     for (min = 0, sum = 0; sum < Math.min(x1,x2); ++min ) {
@@ -43,7 +43,7 @@ function launchProbe(dx,dy,[x1,x2,y1,y2]) {
 
 function part1(data) {
     const target = parseInput(data)
-    const dxrange = getRange(target)
+    const dxrange = guessRange(target)
     let maxY = -Infinity
     for (let dx of dxrange) {
         for (let dy = 0; dy < 500; ++dy) {
