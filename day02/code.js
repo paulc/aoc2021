@@ -1,6 +1,5 @@
 
-import * as std from "std";
-import * as os from "os";
+import { loadFile as read } from "std"
 
 function part1(data) {
     let horiz = 0
@@ -56,7 +55,7 @@ if (part2(test) !== part2_expected) {
     throw("Part2 Test Failed")
 }
 
-const data = std.loadFile("input.txt").trim().split("\n")
+const data = read("input.txt").trim().split("\n")
 
 print("Part1:",part1(data))
 print("Part2:",part2(data))

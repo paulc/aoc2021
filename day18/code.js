@@ -1,6 +1,5 @@
 
-import * as std from "std";
-import * as os from "os";
+import { loadFile as read } from "std"
 
 const test = `
 [[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
@@ -142,7 +141,7 @@ if (part1(test) !== part1_expected) {
     throw("Part1 Test Failed")
 }
 
-const data = std.loadFile("input.txt")
+const data = read("input.txt")
 
 print("Part1:",part1(data))
 

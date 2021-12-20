@@ -1,6 +1,5 @@
 
-import * as std from "std";
-import * as os from "os";
+import { loadFile as read } from "std"
 
 const test = `
 0,9 -> 5,9
@@ -61,7 +60,7 @@ function part2(data) {
     return board.filter((c) => c > 1).length
 }
 
-const data = std.loadFile("input.txt")
+const data = read("input.txt")
 
 const part1_expected = 5
 const part2_expected = 12

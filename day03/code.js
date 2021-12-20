@@ -1,7 +1,5 @@
 
-import * as std from "std";
-import * as os from "os";
-
+import { loadFile as read } from "std"
 
 function part1(data) {
     const width = data[0].length
@@ -74,7 +72,7 @@ if (part2(test) !== part2_expected) {
     throw("Part2 Test Failed")
 }
 
-const data = std.loadFile("input.txt").trim().split("\n").map((l) => l.split("").map((c) => parseInt(c)))
+const data = read("input.txt").trim().split("\n").map((l) => l.split("").map((c) => parseInt(c)))
 
 print("Part1:",part1(data))
 print("Part2:",part2(data))

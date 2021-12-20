@@ -1,6 +1,5 @@
 
-import * as std from "std";
-import * as os from "os";
+import { loadFile as read } from "std"
 
 class Packet {
     constructor(packet) {
@@ -139,7 +138,7 @@ for (const [packet,result] of test1) {
     }
 }
 
-const data = std.loadFile("input.txt")
+const data = read("input.txt")
 
 print("Part1:",part1(data))
 

@@ -1,6 +1,5 @@
 
-import * as std from "std";
-import * as os from "os";
+import { loadFile as read } from "std"
 
 const test = `
 16,1,2,0,4,2,7,1,2,14
@@ -41,7 +40,7 @@ if (part1(test) !== part1_expected) {
     throw("Part1 Test Failed")
 }
 
-const data = std.loadFile("input.txt")
+const data = read("input.txt")
 
 print("Part1:",part1(data))
 
