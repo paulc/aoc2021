@@ -1,6 +1,5 @@
 
-import * as std from "std";
-import * as os from "os";
+import { loadFile as read } from "std"
 
 const test = `
 ..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..###..######.###...####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###.######.###.####...#.##.##..#..#..#####.....#.#....###..#.##......#.....#..#..#..##..#...##.######.####.####.#.#...#.......#..#.#.#...####.##.#......#..#...##.#.##..#...##.#.##..###.#......#.#.......#.#.#.####.###.##...#.....####.#..#..#.##.#....##..#.####....##...##..#...#......#.#.......#.......##..####..#...#.#.#...##..#.#..###..#####........#..####......#..#
@@ -19,20 +18,21 @@ function parseInput(data) {
 }
 
 class Grid {
-    constructor(a) {
+    constructor(a,iv=0) {
         this.data = a
         this.maxX = this.data[0].length
         this.maxY = this.data.length
+        this.iv = iv
     }
-    clone() {
+    clone(pad,emptyVal) {
         const out = []
-        for (let y = 0; y < this.maxY; ++y) {
-            out.push(new Array(this.maxX).fill(0))
+        for (let y = 0; y < this.maxY + pad; ++y) {
+            out.push(new Array(this.maxX + pad).fill(emptyVal))
         }
         return new Grid(out)
     }
-    getXY(x,y,d=0) {
-        return this.data[y] ? (this.data[y][x] === undefined ? d : this.data[y][x]) : d 
+    getXY(x,y) {
+        return this.data[y] ? (this.data[y][x] === undefined ? this.iv : this.data[y][x]) : this.iv 
     }
     setXY(x,y,d) {
         this.data[y][x] = d
@@ -40,14 +40,16 @@ class Grid {
     toString() { 
         return this.data.map((r) => r.map((v) => (v === 0) ? "." : "#").join("")).join("\n")
     }
-    square(x,y,d) { 
-        return [y,y+1,y+2].flatMap((y) => [x,x+1,x+2].map((x) => this.getXY(x,y,d))).reduce((prev,cur) => prev * 2 + cur,0)
+    square(x,y) { 
+        return [y,y+1,y+2].flatMap((y) => [x,x+1,x+2].map((x) => this.getXY(x,y))).reduce((prev,cur) => prev * 2 + cur,0)
     }
-    enhance(algorithm,defaultXY) {
-        let out = this.clone()
+    enhance(algorithm) {
+        const iv = algorithm[new Array(9).fill(this.iv).reduce((prev,cur) => prev * 2 + cur,0)]
+        const out = this.clone(3,iv)
+        out.iv = iv
         for (let x = 0; x < this.maxX; ++x) {
             for (let y = 0; y < this.maxX; ++y) {
-                out.setXY(x,y,algorithm[this.square(x,y,defaultXY)])
+                out.setXY(x+3,y+3,algorithm[this.square(x,y)])
             }
         }
         return out
@@ -75,16 +77,16 @@ class Grid {
 function part1(data) {
     const [algorithm,image] = parseInput(data)
     const g = new Grid(image).pad(5)
-    const out = g.enhance(algorithm,0).enhance(algorithm,algorithm[0])
-    return out.pixels()
+    const out1 = g.enhance(algorithm)
+    const out2 = out1.enhance(algorithm)
+    return out2.pixels()
 }
 
 function part2(data) {
     const [algorithm,image] = parseInput(data)
-    const g = new Grid(image).pad(150)
-    let out = g.enhance(algorithm,0)
-    for (let i = 1; i < 50; ++i) {
-        out = g.enhance(algorithm,(i % 2) ? algorithm[0] : algorithm[511])
+    let out = new Grid(image).pad(5)
+    for (let i = 0; i < 50; ++i) {
+        out = out.enhance(algorithm)
     }
     return out.pixels()
 }
@@ -98,7 +100,7 @@ if (part1(test) !== part1_expected) {
     throw("Part1 Test Failed")
 }
 
-const data = std.loadFile("input.txt")
+const data = read("input.txt")
 
 print("Part1:",part1(data))
 
