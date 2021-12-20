@@ -24,18 +24,15 @@ class Grid {
         this.maxY = this.data.length
         this.iv = iv
     }
-    clone(pad,emptyVal) {
+    clone(pad,iv) {
         const out = []
         for (let y = 0; y < this.maxY + pad; ++y) {
-            out.push(new Array(this.maxX + pad).fill(emptyVal))
+            out.push(new Array(this.maxX + pad).fill(iv))
         }
-        return new Grid(out)
+        return new Grid(out,iv)
     }
     getXY(x,y) {
         return this.data[y] ? (this.data[y][x] === undefined ? this.iv : this.data[y][x]) : this.iv 
-    }
-    setXY(x,y,d) {
-        this.data[y][x] = d
     }
     toString() { 
         return this.data.map((r) => r.map((v) => (v === 0) ? "." : "#").join("")).join("\n")
@@ -45,11 +42,11 @@ class Grid {
     }
     enhance(algorithm) {
         const iv = algorithm[new Array(9).fill(this.iv).reduce((prev,cur) => prev * 2 + cur,0)]
-        const out = this.clone(3,iv)
-        out.iv = iv
+        const pad = 3
+        const out = this.clone(pad,iv)
         for (let x = 0; x < this.maxX; ++x) {
             for (let y = 0; y < this.maxX; ++y) {
-                out.setXY(x+3,y+3,algorithm[this.square(x,y)])
+                out.data[y+pad][x+pad] = algorithm[this.square(x,y)]
             }
         }
         return out
