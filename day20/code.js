@@ -91,8 +91,6 @@ function part2(data) {
 const part1_expected = 35
 const part2_expected = 3351
 
-globalThis.Grid = Grid
-
 if (part1(test) !== part1_expected) {
     throw("Part1 Test Failed")
 }
