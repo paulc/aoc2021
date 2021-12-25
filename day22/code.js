@@ -14,7 +14,7 @@ class Cube {
         this.z2 = Math.max(z1,z2)
     }
     volume() {
-        return (this.x2-this.x1+1) * (this.y2-this.y1+1) * (this.z2-this.z1+1)
+        return (this.state === 'on' ? 1 : -1) * (this.x2-this.x1+1) * (this.y2-this.y1+1) * (this.z2-this.z1+1)
     }
     intersection(other,state) {
         const x1 = Math.max(this.x1,other.x1)
@@ -43,9 +43,7 @@ function run(steps) {
             seen.push(step)
         }
     }
-    //const on = seen.filter((c) => c.state === 'on').map((c) => c.volume()).sum()
-    //const off = seen.filter((c) => c.state === 'off').map((c) => c.volume()).sum()
-    return seen.reduce((prev,cur) => prev + (cur.state === 'on' ? cur.volume() : -cur.volume()),0)
+    return seen.map((s) => s.volume()).sum()
 }
 
 function part1(data) {
